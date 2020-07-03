@@ -1,5 +1,5 @@
-ccsniffpiper
-============
+ccsniffpiper for CC2540
+=======================
 
 *Live Packet Sniffer to Wireshark bridge for IEEE 802.15.4 networks.*
 
