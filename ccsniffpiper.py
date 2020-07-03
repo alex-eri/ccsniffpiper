@@ -65,7 +65,7 @@ defaults = {
     'debug_level': 'WARN',
     'log_level': 'INFO',
     'log_file': 'ccsniffpiper.log',
-    'channel': 11,
+    'channel': 37,
 }
 
 logger = logging.getLogger(__name__)
@@ -105,13 +105,14 @@ class Frame(object):
 class PCAPHelper:
     LINKTYPE_IEEE802_15_4_NOFCS = 230
     LINKTYPE_IEEE802_15_4 = 195
+    LINKTYPE_BLUETOOTH_LE_LL = 251
     MAGIC_NUMBER = 0xA1B2C3D4
     VERSION_MAJOR = 2
     VERSION_MINOR = 4
     THISZONE = 0
     SIGFIGS = 0
     SNAPLEN = 0xFFFF
-    NETWORK = LINKTYPE_IEEE802_15_4
+    NETWORK = LINKTYPE_BLUETOOTH_LE_LL
 
     PCAP_GLOBAL_HDR_FMT = '<LHHlLLL'
 
@@ -181,7 +182,7 @@ class FifoHandler(object):
         except OSError as e:
             if e.errno == errno.ENXIO:
                 if not keepalive:
-                    logger.warn('Remote end not reading')
+                    #logger.warn('Remote end not reading')
                     stats['Not Piped'] += 1
                 self.of = None
                 self.needs_pcap_hdr = True
@@ -292,6 +293,7 @@ class CC2531:
     SET_CHAN  = 0xd2 # 0x0d (idx 0) + data)0x00 (idx 1)
 
     COMMAND_FRAME = 0x00
+    COMMAND_KEEPALIVE = 0x01
 #     COMMAND_CHANNEL = ??
 
     def __init__(self, callback, channel = DEFAULT_CHANNEL):
@@ -306,7 +308,7 @@ class CC2531:
         self.running = False
 
         try:
-            self.dev = usb.core.find(idVendor=0x0451, idProduct=0x16ae)
+            self.dev = usb.core.find(idVendor=0x0451, idProduct=0x16b3)
         except usb.core.USBError:
             raise OSError("Permission denied, you need to add an udev rule for this device", errno=errno.EACCES)
 
@@ -376,6 +378,7 @@ class CC2531:
                         frame = bytesteam[5:]
 
                         if len(frame) == pktLen:
+			    frame = frame[:-2]
                             self.callback(timestamp, frame.tostring())
                         else:
                             logger.warn("Received a frame with incorrect length, pkgLen:%d, len(frame):%d" %(pktLen, len(frame)))
@@ -385,6 +388,8 @@ class CC2531:
 #                         # We'll only ever see this if the user asked for it, so we are
 #                         # running interactive. Print away
 #                         print 'Sniffing in channel: %d' % (bytesteam[0],)
+		    elif cmd == CC2531.COMMAND_KEEPALIVE and len(bytesteam) == 1:
+                        logger.info("Received keepalive")
                     else:
                         logger.warn("Received a command response with unknown code - CMD:%02x byte:%02x]" % (cmd, bytesteam[0]))
 
@@ -392,7 +397,7 @@ class CC2531:
     def set_channel(self, channel):
         was_running = self.running
 
-        if channel >= 11 and channel <= 26:
+        if channel >= 0 and channel <= 39:
             if self.running:
                 self.stop()
 
@@ -433,7 +438,7 @@ def arg_parser():
 
     in_group = parser.add_argument_group('Input Options')
     in_group.add_argument('-c', '--channel', type = int, action = 'store',
-                          choices = range(11, 27),
+                          choices = range(11, 40),
                           default = defaults['channel'],
                           help = 'Set the sniffer\'s CHANNEL. Valid range: 11-26. \
                                   (Default: %s)' % (defaults['channel'],))
@@ -556,7 +561,7 @@ if __name__ == '__main__':
         h.write('c: Print current RF Channel\n')
         h.write('n: Trigger new pcap header before the next frame\n')
         h.write('h,?: Print this message\n')
-        h.write('[11,26]: Change RF channel\n')
+        h.write('[0,39]: Change RF channel\n')
         h.write('s: Start/stop the packet capture\n')
         h.write('q: Quit')
         h = h.getvalue()
@@ -595,7 +600,7 @@ if __name__ == '__main__':
                                 snifferDev.stop()
                             else:
                                 snifferDev.start()
-                        elif int(cmd) in range(11, 27):
+                        elif int(cmd) in range(0, 39):
                             snifferDev.set_channel(int(cmd))
                         else:
                             raise ValueError

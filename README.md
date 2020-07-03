@@ -5,10 +5,10 @@ ccsniffpiper
 
 NOTE WELL: I have implemented a new python script that does the same job as the TI Sniffer, but on the console. See **[pyCCSniffer](https://github.com/andrewdodd/pyCCSniffer)** for more details!
 
-A Python module that uses a Texas Instruments CC2531emk USB dongle to sniff packets and pipe them to (primarily) wireshark.
+A Python module that uses a Texas Instruments CC2540emk USB dongle to sniff packets and pipe them to (primarily) wireshark.
 
 This tool is a mashup of two existing GitHub projects:
- * **[sensniff](https://github.com/g-oikonomou/sensniff)**: A python tool by George Oikonomou to capture packets with the "sensniff" firmware for the TI CC2531 sniffer.
+ * **[sensniff](https://github.com/g-oikonomou/sensniff)**: A python tool by George Oikonomou to capture packets with the "sensniff" firmware for the TI CC2540 sniffer.
  * **[ccsniffer](https://github.com/christianpanton/ccsniffer)**: A python module by Christian Panton to capture packets with the original TI firmware and print them to stdout.
 
 This tool attempts to take the usefulness of the **ccsniffer** not needing different firmware to the default TI firmware (so you can still use TI's Windows-based program) and combine it with the usefulness of live Wireshark capture. It is mostly based on the **sensniff** project, as that project already had more functionality.
@@ -26,7 +26,7 @@ How to Use
 ==========
 Run ccsniffpiper
 ----------------
-**ccsniffpiper**'s main role it to read from the CC2531 USB packet sniffer and pipe the packets in PCAP format to a named pipe (by default "/tmp/ccsniffpiper").
+**ccsniffpiper**'s main role it to read from the CC2540 USB packet sniffer and pipe the packets in PCAP format to a named pipe (by default "/tmp/ccsniffpiper").
 
 To get this default behaviour, just run the command:
 `python ccsniffpiper.py`
@@ -65,7 +65,7 @@ This is just documentation of the packet format from the TI USB dongle. It is no
   * 0x01 - Message appears to be a heartbeat of some sort (seems to include the "captured count")
  * **Length**: (2 bytes) - The length of the rest of the message
  * **Timestamp**: (4 bytes) - The sniffer's timestamp of the captured packet since the "start" of the capture.
-   * **Note Well**: This timestamp is in usecs and is multiplied by 32 (see CC2531 user guide for info)
+   * **Note Well**: This timestamp is in usecs and is multiplied by 32 (see CC2540 user guide for info)
  * **Packet Length**: (1 byte) - Length of the MAC Layer PDU (i.e. the "frame length" / PHY Header byte)
  * **MAC Layer PDU**: Variable length specified in Packet Length.
 
